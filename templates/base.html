@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+        <title>{{ obj.name if obj.name else "undefined" }}</title>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="{{ get_static_url("style.css") }}"/>
+</head>
+<body>
+        <header>
+                <nav>
+                        <strong> mylesalamb.com </strong>
+                        <span> / </span>
+                        <a href="{{ get_object_url("index.html") }}">Home</a>
+                        <span> / </span>
+                        <a href="{{ get_object_url("projects.html") }}">Projects</a>
+                        <span> / </span>
+                        <a href="{{ get_static_url("resume.pdf") }}">Resume</a>
+                        <span> / </span>
+                        <a href="{{ get_object_url("about.html") }}">About</a>
+                        <span> / </span>
+                        <hr>
+                </nav>
+        </header>
+        <div id="container">
+                <div id="content">{% block content %} {% endblock %}</div>
+                <footer class="col-parent">
+                        <div id="footer-text" class="col-5">
+                                <p>All content is licensed as per the license shown below that content. All other sources (html, css, ...) are released under the terms of the GNU GPL, version 3 or later.</p>
+
+                                <p> This site was generated using <a href="https://github.com/mylesalamb/yassg"> yassg </a> a static site generator that I wrote myself, given my disdain for all other SSGs in existence. </p>
+                                <p>
+                                © Myles Lamb, 2021.
+                                </p>
+
+                        </div>
+                        <div id="links" class="col-5">
+                        Social Links
+                        <ul>
+                                <li> <a href="https://twitter.com/mylesalamb"> twitter </a></li>
+                                <li> <a href="https://instagram.com/mylesalamb"> instagram </a></li>
+                                <li> <a href="https://uk.linkedin.com/in/myles-lamb-937727196"> linkedin </a></li>
+                                <li> <a href="https://github.com/mylesalamb"> github </a></li>
+                        </ul>
+                        </div>
+                </footer>
+        </div>
+</body>
+</html>

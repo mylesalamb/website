@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ obj.name if obj.name else mysite }}
+{% endblock %}
+
+
+{% block content %}
+using the listings template
+
+{% for x in get_objects_by_tag(obj.arg) %}
+
+stuff
+
+{% endfor %}
+
+{% endblock %}
+
+

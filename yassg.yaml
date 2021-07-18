@@ -1,0 +1,24 @@
+content:
+  assets:
+    - dir: "assets"
+      template: "main.html"
+      output_dir: ""
+    - dir: "articles"
+      template: "article.html"
+      output_dir: "article"
+    - dir: "projects"
+      template: "project.html"
+      output_dir: "projects"
+    - dir: "listings"
+      template: "projects.html"
+      output_dir: ""
+  templates:
+    - "templates"
+    - "statusTemplates"
+  static:
+    - src_dir: "static"
+      output_dir: "static"
+    - src_dir: "rootStatic"
+      output_dir: ""
+vars:
+  foo: "bar"
