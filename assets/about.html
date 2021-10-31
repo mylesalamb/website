@@ -2,4 +2,49 @@
 name: about.html
 ---
 
-Some stuff that should appear in the about page
+<h2>General stuff:</h2>
+
+<dl>
+        <dt> <b>Why does this website look like something from the 1970s?</b> </dt>
+        <dd>The web development sphere has continually become more and
+                more bloated over time, many articles discussing "the web obesity crisis" (ironically on bloated sites)
+                have already discussed this, and suggest that text heavy websites continue to
+                grow in size into the range of 5Mb. largely attributed to needless images,
+                and large often uneeded Javascript/CSS dependencies (JQuery 3.6.0 == 70.68k). Adopting a minimal approach to web development
+                keeps this website fast, and easily maintainable.
+        </dd>
+        <dt><b>Why write your own SSG?</b></dt>
+        <dd>Because it's fun! Writing and then using your own software is fairly liberating.
+                For instance, other SSGs such as Pelican or Jekyll seem to bludgeon their users
+                into their own way of doing things (pre built themes, mandatory layouts, etc...).
+                In writing your own SSG you are free to add your own features that support
+                how you like to work. For instance, with YASSG (the SSG used for this site)
+                I can embed template directives within template content, that will actually be rendered.
+                This isnt sometihng that either Jekyll or Pelican support (to my knowledge).
+                FYI the recursive expansion is handled
+                <a href="https://github.com/mylesalamb/yassg/blob/cd20486196ac8a1e2bd585604995f7ab912e8f63/yassg/template.py#L53-L60">here</a>.</dd>
+
+</dl>
+
+<h2>Technology stuff:</h2>
+
+<dl>
+        <dt><b>What operating system do I use?</b></dt>
+        <dd>Artix Linux(runit), more or less a fork of Arch Linux, that does not
+                use the systemd init system. I had previously used Void Linux where I found
+                runit to be much simpler/more sane.</dd>
+        <dt><b>What browser do I use?</b></dt>
+        <dd>Librewolf, basically a firefox clone that comes bundled with privacy
+                focussed defaults.</dd>
+        <dt><b>Other software I use regularly</b></dt>
+        <dd>(Neo)Vim, as a text editor. dwm, as a window manager. st, as a terminal.
+        dmenu, as a command laucher</dd>
+        <dt><b>What languages have I used?</b></dt>
+        <dd>At one time or another I have written code in... x86 Assembler, Arm
+                Assembler, C/++/#, GNU Cobol, Haskell, Erlang, Scala, Python[2,3], Prolog, Java[8,...,15],
+                Kotlin, Dart, Bash/ZSH/KSH, HCL, Javascript, Golang, Rust and Lua. Although I'm only remotely profficient in the
+                ones mentioned on my CV ;)</dd>
+
+</dl>
+
+
