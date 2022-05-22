@@ -2,11 +2,15 @@
 title: TauOS
 name: tauos
 tags: project
-short_description: a short description about what the project is
-languages: C, ARM64 assembler
-
+short_description: An alternate operating system for the Raspberry Pi.
+languages: C, GNU Make, ARM64 assembler
+license: GPLv3
 ---
 
-some longer sescription about what the project is
+An operating system that targets the Raspberry Pi. Currently the operating
+system exists as a fairly minimal collection drivers for the hardware that the
+Raspberry Pi provides, such as drivers for interacting with the boards mini-uart,
+Videocore mailbox property API and Framebuffer.
 
-
+Im currently working on getting exceptions/interrupts working properly, and building
+on some core utilities for the kernel, such as abstractions for the drivers.

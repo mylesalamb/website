@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ obj.name if obj.name else mysite }}
+{% endblock %}
+
+
+{% block content %}
+{% for article in get_objects_by_tag("article") %}
+
+<div class="article">
+        <div class="article-title"> <a href="{{ get_object_url(article.name) }}">{{ article.title }}</a></div>
+        <p class="article-description"> {{ article.short_description}} </p>
+</div>
+
+{% endfor %}
+
+{% endblock %}
+
+

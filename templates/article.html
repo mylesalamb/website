@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ obj.name if obj.name else mysite }}
+{% endblock %}
+
+
+{% block content %}
+
+<h2>{{ obj.title }}</h2>
+
+{{ obj.body }}
+
+{% endblock %}

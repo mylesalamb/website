@@ -5,12 +5,12 @@ content:
       output_dir: ""
     - dir: "articles"
       template: "article.html"
-      output_dir: "article"
+      output_dir: "articles"
     - dir: "projects"
       template: "project.html"
       output_dir: "projects"
     - dir: "listings"
-      template: "projects.html"
+      template: "listing.html"
       output_dir: ""
   templates:
     - "templates"
@@ -20,5 +20,4 @@ content:
       output_dir: "static"
     - src_dir: "rootStatic"
       output_dir: ""
-vars:
-  foo: "bar"
+

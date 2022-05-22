@@ -6,15 +6,25 @@ name: about.html
 
 <dl>
         <dt> <b>Why does this website look like something from the 1970s?</b> </dt>
-        <dd>The web development sphere has continually become more and
+        <dd>    <p>
+                The web development sphere has continually become more and
                 more bloated over time, many articles discussing "the web obesity crisis" (ironically on bloated sites)
                 have already discussed this, and suggest that text heavy websites continue to
-                grow in size into the range of 5Mb. largely attributed to needless images,
-                and large often uneeded Javascript/CSS dependencies (JQuery 3.6.0 == 70.68k). Adopting a minimal approach to web development
-                keeps this website fast, and easily maintainable.
+                grow in size into the range of 5Mb. 
+                </p>
+
+                <p>
+                This growth in the size of webpages is largely attributed to needless images
+                and large, often uneeded Javascript/CSS dependencies (JQuery 3.6.0 == 70.68k).
+                Realising this, I wrote this website with an emphasis on minimising bloat. Hence this
+                website uses a single, cacheable CSS file and uses a total of <b>0</b> lines of JavaScript, as informational websites
+                should not need anything more.
+                </p>
         </dd>
         <dt><b>Why write your own SSG?</b></dt>
-        <dd>Because it's fun! Writing and then using your own software is fairly liberating.
+        <dd>    
+                <p>
+                Because it's fun! Writing and then using your own software is fairly liberating.
                 For instance, other SSGs such as Pelican or Jekyll seem to bludgeon their users
                 into their own way of doing things (pre built themes, mandatory layouts, etc...).
                 In writing your own SSG you are free to add your own features that support
@@ -22,7 +32,15 @@ name: about.html
                 I can embed template directives within template content, that will actually be rendered.
                 This isnt sometihng that either Jekyll or Pelican support (to my knowledge).
                 FYI the recursive expansion is handled
-                <a href="https://github.com/mylesalamb/yassg/blob/cd20486196ac8a1e2bd585604995f7ab912e8f63/yassg/template.py#L53-L60">here</a>.</dd>
+                <a href="https://github.com/mylesalamb/yassg/blob/cd20486196ac8a1e2bd585604995f7ab912e8f63/yassg/template.py#L53-L60">here</a>.                
+                </p>
+
+                <p>
+                This recursive expansion has interesting implications. for instance, both the <a href="{{ get_object_url('articles.html') }}">articles</a>
+                and <a href="{{ get_object_url('projects.html') }}">projects</a> pages use the same underlying template that handles a generic 'listing' of pages
+                </p>
+        </dd>
+
 
 </dl>
 
@@ -38,7 +56,7 @@ name: about.html
                 focussed defaults.</dd>
         <dt><b>Other software I use regularly</b></dt>
         <dd>(Neo)Vim, as a text editor. dwm, as a window manager. st, as a terminal.
-        dmenu, as a command laucher</dd>
+                dmenu, as a command laucher</dd>
         <dt><b>What languages have I used?</b></dt>
         <dd>At one time or another I have written code in... x86 Assembler, Arm
                 Assembler, C/++/#, GNU Cobol, Haskell, Erlang, Scala, Python[2,3], Prolog, Java[8,...,15],
