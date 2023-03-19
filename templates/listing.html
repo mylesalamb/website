@@ -10,8 +10,8 @@
 {% for x in get_objects_by_tag(obj.arg) %}
 
 <div class="{{ obj.arg }}">
-        <div class="{{ obj.arg }}-title"> <a href="{{ get_object_url(x.name) }}">{{ x.title }}</a></div>
-        <p class="{{ obj.arg }}-description"> {{ x.short_description}} </p>
+        <div class="{{ obj.arg }}-title"> <a href="{{ get_object_url(x.name) }}">{{ x.metadata.title }}</a></div>
+        <p class="{{ obj.arg }}-description"> {{ x.metadata.short_description}} </p>
 </div>
 
 

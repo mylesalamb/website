@@ -9,7 +9,7 @@ name: about.html
         <dd>    <p>
                 The web development sphere has continually become more and
                 more bloated over time, many articles discussing "the web obesity crisis" (ironically on bloated sites)
-                have already discussed this, and suggest that text heavy websites continue to
+                have already discussed this, and suggest that text heavy websites will continue to
                 grow in size into the range of 5Mb. 
                 </p>
 
@@ -38,6 +38,7 @@ name: about.html
                 <p>
                 This recursive expansion has interesting implications. for instance, both the <a href="{{ get_object_url('articles.html') }}">articles</a>
                 and <a href="{{ get_object_url('projects.html') }}">projects</a> pages use the same underlying template that handles a generic 'listing' of pages
+                where the templating engine, passes an argument to itself to derive a list of suitable entries on the page.
                 </p>
         </dd>
 
@@ -48,20 +49,35 @@ name: about.html
 
 <dl>
         <dt><b>What operating system do I use?</b></dt>
-        <dd>Artix Linux(runit), more or less a fork of Arch Linux, that does not
+        <dd>
+                <p>
+                Artix Linux(runit), more or less a fork of Arch Linux, that does not
                 use the systemd init system. I had previously used Void Linux where I found
-                runit to be much simpler/more sane.</dd>
+                runit to be much simpler.
+                </p>
+        </dd>
         <dt><b>What browser do I use?</b></dt>
-        <dd>Librewolf, basically a firefox clone that comes bundled with privacy
+        <dd>
+                <p>
+                Librewolf, basically a firefox clone that comes bundled with privacy
                 focussed defaults.</dd>
+                </p>
         <dt><b>Other software I use regularly</b></dt>
-        <dd>(Neo)Vim, as a text editor. dwm, as a window manager. st, as a terminal.
-                dmenu, as a command laucher</dd>
+        <dd>
+                <p>
+                (Neo)Vim, as a text editor. dwm, as a window manager. st, as a terminal.
+                dmenu, as a command laucher
+                </p>
+        </dd>
+
         <dt><b>What languages have I used?</b></dt>
-        <dd>At one time or another I have written code in... x86 Assembler, Arm
+        <dd>
+                <p>
+                At one time or another I have written code in... x86 Assembler, Arm
                 Assembler, C/++/#, GNU Cobol, Haskell, Erlang, Scala, Python[2,3], Prolog, Java[8,...,15],
                 Kotlin, Dart, Bash/ZSH/KSH, HCL, Javascript, Golang, Rust and Lua. Although I'm only remotely profficient in the
                 ones mentioned on my CV ;)</dd>
+                </p>
 
 </dl>
 

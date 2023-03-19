@@ -6,6 +6,7 @@ short_description: My 4th year university project. A network measurement study i
 languages: Python, C, BASH, HCL (Hashicorp Configuration language)
 license: MIT
 ---
+
 <p>
 This project was my dissertation, submitted as part of my BSc(Hons) degree, this
 project required me to investigate the state of ECN (Explicit Congestion
@@ -13,23 +14,27 @@ Notification) traversal on the network.
 </p>
 
 <p>
-Across the duration of this project, I wrote a network analysis tool in C, developed
-an experimental methodology to realise the reasearch aims, wrote terraform (IaC) to
-define suitable infrastructure to deploy the tool across the globe, as well as a suite
-of data analysis tools to recover the statistics about the data obtained.
+Below, I detail the aims and the results from the paper.
 </p>
 
 <p>
-This project was much longer in length than any previous project that I had worked on
-and covered numerous areas of the software stack. From interacting with the kernel's
-packet buffer, allowing unconstrained interactions with outgoing packets. To defining
-suitable cloud infrastructure so that the tool could be deployed in a meaningful and
-manageable way.
+Explicit Congestion Notification (ECN) allows devices on the network to signal incipient congestion before
+a congestive loss occurs. However, devices on the network have presented deployment
+issues for features such as ECN through applying modifications to packets that are destructive to
+ECN signalling. My paper investigates where network devices alter ECN Capable Transport
+(ECT) code points. To achieve this, I implemented a new network analysis tool. Subsequently
+conducting a medium-scale deployment of this tool to gather various measurements from the network 
+to ascertain the current state of affairs of the treatment of ECN on the network. 
+</p>
+
+<p>
+Key findings include that there does not appear to be any particular inhibitors to the deployment of
+ECN within Quic (a relatively new transport protocol). Additionally, we find that the transport protocol in use generally does not
+influence the behaviour of devices on the network, and that the specific ECT code point in use does not generally cause devices to
+misbehave.
 </p>
 
 <ul>
-
-        <li> <a href="{{ get_static_url("IndividualProject.pdf") }}">Dissertation</a> </li>
-        <li> <a href="{{ get_static_url("Presentation.pdf") }}">Presentation</a> </li>
+    <li><a href="{{ get_static_url("IndividualProject.pdf") }}">Dissertation</a></li>
+    <li><a href="{{ get_static_url("Presentation.pdf") }}">Presentation</a></li>
 </ul>
-
