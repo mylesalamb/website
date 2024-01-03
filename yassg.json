@@ -1,0 +1,50 @@
+{
+
+    "content": [
+        {
+            "builder": "static",
+            "source_directory": "./root-static",
+            "output_directory": ""
+        },
+        {
+            "builder": "template",
+            "source_directory": "./root-pages",
+            "output_directory": ""
+        }
+    ],
+    "builders": {
+        "static": {
+            "flavor": "StaticBuilder",
+            "config": {
+                "symlink": true
+            }
+        },
+        "template": {
+            "flavor": "MarkdownBuilder",
+            "config": {
+                "template_directory": "./templates",
+                "markdown_extensions": ["fenced_code"],
+                "recursive": true
+            }
+        }
+    },
+    "variables": {
+        "site_name": "mylesalamb.com",
+        "author": "Myles Lamb",
+        "project_url": "https://github.com/mylesalamb/yassg",
+        "socials": [
+            {
+                "key": "Twitter",
+                "link": "https://twitter.com/mylesalamb"
+            },
+            {
+                "key": "Github",
+                "link": "https://github.com/mylesalamb"
+            },
+            {
+                "key": "Instagram",
+                "link": "https://instagram.com/mylesalamb"
+            }
+        ]
+    }
+}

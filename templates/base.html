@@ -1,53 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
-        <head>
-                <title>{{ obj.name if obj.name else "undefined" }}</title>
-                <meta charset="utf-8"/>
-                <meta name="viewport" content="width=device-width, initial-scale=1">
-                <link rel="stylesheet" href="{{ get_static_url("style.css") }}"/>
-        </head>
-        <body>
-                <header>
-                        <nav>
-                                <a href="/" id="home"><strong>mylesalamb.com</strong></a>
-                                <span> / </span>
-                                <a href="{{ get_object_url("projects.html") }}">Projects</a>
-                                <span> / </span>
-                                <a href="{{ get_object_url("articles.html") }}">Articles</a>
-                                <span> / </span>
-                                <a href="{{ get_static_url("resume.pdf") }}">Resume</a>
-                                <span> / </span>
-                                <a href="{{ get_object_url("about.html") }}">About</a>
-                                <span> / </span>
-                                <hr>
-                        </nav>
-                </header>
-                <div id="content" class="content">
-                        <div id="content" class="row padding-16">{% block content %} {% endblock %}</div>
-                        <footer class="row">
-                                <div id="footer-text" class="col l8 s12">
-                                        <p>All content is licensed as per the license shown below that content. All other sources (html, css, ...) are released under the terms of the GNU GPL, version 3 or later.</p>
 
-                                        <p> This site was generated using <a href="https://github.com/mylesalamb/yassg"> yassg </a> a static site generator that I wrote myself, given my disdain for all other SSGs in existence.
-                                        </p>
-                                        <p>
-                                        This site was generated on {{ get_current_time() }}
-                                        </p>
-                                        <p>
-                                        © Myles Lamb, 2021-2022.
-                                        </p>
+    <head>
+        <!-- Meta spam for SEO -->
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="title" content="{{ ctx.variables.site_name }}">
+        <meta name="description" content="Personal blog discussing technology topics">
+        <meta name="keywords" content="technology, programming">
+        <meta name="robots" content="index, follow">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="language" content="English">
+        <meta name="revisit-after" content="14 days">
+        <meta name="author" content="{{ ctx.variables.author }}">
+    </head>
 
-                                </div>
-                                <div id="links" class="col l4 s12">
-                                        <p>Social Links</p>
-                                        <ul>
-                                                <li> <a href="https://twitter.com/mylesalamb"> twitter </a></li>
-                                                <li> <a href="https://instagram.com/mylesalamb"> instagram </a></li>
-                                                <li> <a href="https://uk.linkedin.com/in/myles-lamb-937727196"> linkedin </a></li>
-                                                <li> <a href="https://github.com/mylesalamb"> github </a></li>
-                                        </ul>
-                                </div>
-                        </footer>
-                </div>
-        </body>
+    <body>
+        <header>
+            <nav>
+
+            </nav>
+        </header>
+
+        <main>
+            {{ content }}
+        </main>
+
+        <footer class="row">
+            <div>
+                <p>All content is licensed as per the license shown below that content. All other sources (html, css, ...) are released under the terms of the GNU GPL, version 3 or later.</p>
+
+                <p>
+                    This site was generated using <a href="{{ ctx.variables.project_url }}">yassg</a> a static site generator that I wrote myself, given my disdain for all other SSGs in existence.
+                </p>
+                <p>
+                    this has an about page <a href="{{ ctx.get_artifact_by_name('About').url }}">here</a>
+                </p>
+                <p>
+                    © {{ ctx.variables.author }}, 2021-2023.
+                </p>
+            </div>
+            <div>
+                {% for social in ctx.variables.socials %}
+                    <ul>
+                        <li><a href="{{ social.link }}">{{ social.key }}</a></li>
+                    </ul>
+                {% endfor %}
+            </div>
+
+        </footer>
+    </body>
+
+
 </html>
