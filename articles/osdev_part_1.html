@@ -1,0 +1,252 @@
+---
+{
+    "name": "OSDev Ramblings: Part 1" ,
+    "description": "Figuring out which way is up",
+    "type": "article",
+    "template": "article.html",
+    "date": 1719002798
+}
+---
+
+__article is a draft, there will be spelling errors__
+
+a working example of the code can be found in my [github repository](https://github.com/mylesalamb/TauOS/commit/3df0f62731f39755357a5708ea0167bbdf3e4810)
+
+#### Synopsis
+
+In the last article I discused how to setup a bare minimum "Hello world!" application that runs
+outwith any operating system for the QEMU 'virt' board. Using the ELF loader that QEMU provides.
+This is convenient, although it demands prior knowledge of where the main memory is on the board to inform
+the link address at build time.<sup>1</sup>
+
+In this next article, I will discuss how we can leverage the Linux kernel boot protocol for ARM, and
+runtime patching of the executable to shake off any dependencies on the link address to make the kernel
+more portable.
+
+#### What was wrong with the boot stub from last time?
+
+As part of our linker script (the configuration that describes the layout of the executable that we build) we had to have
+prior knowledge of the layout of main memory. QEMU helps with this somewhat, as long as we put a sensible link address in the linker script,
+and use its' ELF-loader, we would largely be OK... However, if we tried to run the same executable on a different board. That link address
+that we provided previously may not make sense. Furthermore, having a predetermined set of addresses that your program depends on, presents security implications.
+
+So you may ask, why cant we just run the executable from a different address other than the link address?
+
+Lets revisit the `ldr` pseudo instruction, and its relevance to the link address. One of the things that we didnt do last time was clear
+an area of the executable called the BSS segment, the area of an exectuable that stores uninitialised static variables. The C compiler uses this segment to store
+global variables that are declared, but not initialised with a value. Our C runtime expects the variables that live in this segment to have a 'zero' value. So lets write an assembly stub to do that...
+
+```asm
+/* Clear bss, BSS size is some multiple of 64bits */
+clear_bss:
+    ldr x5, =__BSS_START
+    ldr x6, =__BSS_END
+    sub x6, x6, x5 // bss size in byte
+    lsr x6, x6, #3 // bss size in 64 bits
+
+bss_loop: 
+    cbz x6, bss_loop_end
+    str xzr, [x5], #8
+    sub x6, x6, #1
+    b bss_loop
+```
+
+All this stub does, is loads the addresses of the start and the end of the BSS segment and writes zeros in 8 byte increments across the region in memory.
+When assembled, we can read the dissaembled executable with `aarch64-none-elf-objdump -D ./obj/kernel/kernel.elf | more`
+
+```asm
+0000000040080084 <bss_setup>:
+    40080084:   580001e5        ldr     x5, 400800c0
+    40080088:   58000206        ldr     x6, 400800c8
+    4008008c:   cb0500c6        sub     x6, x6, x5
+    40080090:   d343fcc6        lsr     x6, x6, #3
+
+...
+    400800c0:   40081088        .inst   0x40081088 ; undefined
+    400800c4:   00000000        udf     #0
+    400800c8:   40082008        .inst   0x40082008 ; undefined
+    400800cc:   00000000        udf     #0
+
+```
+
+This reveals, what the `ldr` psuedo instruction gets assembled as. We can see a pc-relative load instruction<sup>2</sup> to another close by
+region in memory (called a literal pool) that contains the computed values of the symbols we defined in the linker. Noteably, we can see that these values
+are derived from the link address. Hence, if the program gets loaded to the wrong address. Then this piece of code that clears the BSS segment will write 0s
+to a region of memory that may contain other data.
+
+#### So how do we solve this problem?
+
+We need a way to programmatically, detect and 'fix' instructions in the kernel that depend on the link address.
+Thankfully, modern C compilers provide that with the `-pie` compiler flag. This tells the compiler to build object files
+into a position independant executable. Resulting a few extra sections in the produced ELF file.
+
+We can read the various sections of the ELF file, with the command `./bin/cross-cc/bin/aarch64-none-elf-readelf ./obj/kernel/kernel.elf -all`.
+Once compiled with the `-pie` flag, we should notice a few extra sections being produced. Namely one called `.rela`, this contains relocation information relevant to the binary.
+
+```
+Relocation section '.rela' at offset 0x101f0 contains 5 entries:
+  Offset          Info           Type           Sym. Value    Sym. Name + Addend
+0000400800b8  000000000403 R_AARCH64_RELATIV                    40080000
+0000400800c0  000000000403 R_AARCH64_RELATIV                    40081088
+0000400800c8  000000000403 R_AARCH64_RELATIV                    40082008
+0000400800d0  000000000403 R_AARCH64_RELATIV                    400800e0
+0000400800d8  000000000403 R_AARCH64_RELATIV                    40083080
+```
+
+the `readelf` program attempts to interpret the various fields of each relocation entry in the file. Although,
+each entry at a 'bit' level could be represented by a C struct that looks like...
+
+```C
+typedef struct {
+    Elf64_Addr      r_offset;
+    Elf64_Xword     r_info;
+    Elf64_Sxword    r_addend;
+} Elf64_Rela;
+```
+
+So what do these different fields mean?
+
+* offset: The address, as known at link time of the value to be relocated the address of the member in the literal pool in our example
+* info: Contains the type of relocation to be performed. There are many types, although we are only concnered with `R_AARCH64_RELATIV`
+* addend: For the `R_AARCH64_RELATIV` relocation type this is the difference between the link address and the generated value that is stored in the literal pool.
+
+So with that, lets go back to our linker script to define symbols to interact with the relocation entries, it should look something like.
+
+```
+...
+.rela : ALIGN(8) {
+    __RELA_START = .;
+    *(.rela .rela*)
+    __RELA_END = .;
+}
+...
+```
+
+Now in our boot stub, before we execute any instructions that might depend on the load address (like clearing the BSS), we want to iterate over each entry in the relocation section and adjust it so that
+the values in the section reflect the load address as opposed to the link address, The code to do this, largely adapted from the Linux Kernel looks like.
+
+```asm
+#define R_AARCH64_RELATIVE 1027
+adr x0, __START
+ldr x1, k_ld_addr
+sub x0, x0, x1
+adr x2, __RELA_START
+adr x3, __RELA_END
+
+/* Setup a simple while loop to iter over relocs*/
+reloc_loop:
+    cmp x2, x3
+    b.hs bss_setup
+
+    ldp x4, x5, [x2], #24
+    ldr x6, [x2, #-8]
+
+    cmp x5, #R_AARCH64_RELATIVE
+    b.ne reloc_loop
+
+    add x6, x6, x0
+    str x6, [x4, x0]
+    b reloc_loop
+
+k_ld_addr:
+    .dword __START
+```
+
+Lets walk through what this code does. Firstly, on lines 2-4, we prepare some registers such that. `x0` contains the load address, ie. the address that the binary was placed in, and then in `x1`, we store the link address. By placing the literal link address value
+from the linker at a labelled location elsewhere in the executable. Lastly taking the difference between these two values, gives us the offset we need to apply to relocate values that depend on the link address.
+
+Lines 5-6, simply load the addresses of where the relocation information lives in the executable, using the symbols that we defined in the linker. Note that we use the `adr` instruction and _NOT_ the psuedo-variant of the `ldr` instruction
+
+Lines 13-17, load the relocation information fields for a particular entry, such that. `x4` contains the offset, `x5` contains the type, and `x6` contains the addend. We then check it is the type of relocation that we are interested in, otherwise we skip back to start the next iteration of the loop
+
+Lines 19-20, are the ones that actually 'apply' the relocation. x6 contains the addend of the link address, and x0 contains the difference between the load address and the link address. Hence the add operation looks something like
+`addend + (load - link)` which is the value that we want. Next we write this value (`x6`) to memory using the offset form of the ARM `str` instruction, where the address to write to is derived as `x4 + x0`, or really `offset + (load - link)` computing the correct load
+address of the member of the literal pool.
+
+So now that we have a kernel that does not have a hard dependency on the link address, we need a way to signal
+to QEMU that we no longer require the ELF-loader it uses to prepare our binary. Thankfully, QEMU supports both booting ELFs,
+and flat image files, that implement Linux kernel boot protocol.
+
+#### what is Linux Kernel boot protocol?
+
+The Linux Kernel specifies expected behaviours of a bootloader or platform specific firmware when it
+intends to load and execute a Linux Kernel. These expectations generally revolve around,
+initialising DRAM and the CPU to sensible values, loading a device tree and the kernel, where finally control is handed over to it.
+
+Control is passed to the kernel via jumping to the beginning of the kernel image in memory. The first
+bytes of the kernel image contain an encoded jump instruction to the kernel initialisation code and other configuration for the kernel
+
+From the [kernels documentation](https://www.kernel.org/doc/Documentation/arm/Booting) we can find the other relevant fields in the header
+of the image.
+
+```C
+u32 code0;			        /* Executable code */
+u32 code1;			        /* Executable code */
+u64 text_offset;		    /* Image load offset, little endian */
+u64 image_size;		        /* Effective Image size, little endian */
+u64 flags;			        /* kernel flags, little endian */
+u64 res2	= 0;		    /* reserved */
+u64 res3	= 0;		    /* reserved */
+u64 res4	= 0;		    /* reserved */
+u32 magic	= 0x644d5241;	/* Magic number, little endian, "ARM\x64" */
+u32 res5;			        /* reserved (used for PE COFF offset) */
+```
+
+With this we can implement a compatible header in our boot stub that we defined in the previous article,
+it should look something like this.
+
+```asm
+.global _entry
+
+/* Linux compatible image header */
+_entry:
+    /* Jump instruction, pc relative */
+    b _start
+    .word 0
+    /* Text offset */
+    .dword 0
+    /* Image size */
+    .dword 0
+    /* flags */
+    .dword 0
+    /* reserved */
+    .dword 0
+    .dword 0 
+    .dword 0
+    /* magic */
+    .word 0x644d5241
+    /* reserved*/
+    .word 0
+
+_start:
+    /* Other startup code as before */
+    ...
+```
+
+Notably we dont implement any of the behaviours of the configuration stored in the header. Just the initial jump instruction
+to where the rest of our startup code lives.
+
+Lastly, we need to convert our produced `.elf` file to a flat image file, there is a tool called objcopy that will do that for us. The command
+should look something like `aarch64-none-elf-objcopy kernel.elf -O binary kernel.img`
+
+With QEMU running the image with `qemu-system-aarch64 -machine virt -m 1024M -kernel $(OBJDIR)kernel/kernel.img -cpu cortex-a53 -display gtk` should print `Hello world!` as before.
+
+
+#### Aside: KASLR
+
+What was just demonstrated was really one of the core ideas behind KASLR (Kernel Address Space Layout Randomization), where at runtime the kernel executable, is moved to a random
+address, and relocations on the code are run. This is a defence in depth strategy, frustrating attempts at reading / writing to known addresses in the kernel,
+as specific data structures will live at different addresses each time the kernel is run. The only thing we would really need to differently here, is to pick a random address range to copy the kernel to, and jump to it.
+
+* <sup>1</sup> Different boards / SoCs vary widely in where things such as main memory 'live', not always starting
+at address `0x000...` as one might expect. For instance the QEMU 'virt' board, has its main memory start at [`0x4000_0000`](https://www.qemu.org/docs/master/system/arm/virt.html)
+* <sup>2</sup> Objdump does not make it super obvious that that is what happens. However, we can refer to the [documentation for the instruction](https://developer.arm.com/documentation/ddi0602/2024\-03/Base\-Instructions/LDR\-\-literal\-\-\-Load-Register\-\-literal\-\-)
+
+#### Up Next...
+
+* Flattened Device Trees (FDTs)
+
+#### References
+
+* [The thread in the LKML on relocatable ARM images](https://lore.kernel.org/lkml/1452518355-4606-19-git-send-email-ard.biesheuvel@linaro.org/)
+* [rhythm16's explanations on KASLR](https://rhythm16.github.io/kaslr_en/)

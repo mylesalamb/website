@@ -4,12 +4,27 @@
         {
             "builder": "static",
             "source_directory": "./root-static",
+            "output_directory": "."
+        },
+        {
+            "builder": "static",
+            "source_directory": "./static",
+            "output_directory": "./static"
+        },
+        {
+            "builder": "markdown_template",
+            "source_directory": "./root-pages",
             "output_directory": ""
         },
         {
-            "builder": "template",
-            "source_directory": "./root-pages",
-            "output_directory": ""
+            "builder": "markdown_template",
+            "source_directory": "./articles",
+            "output_directory": "articles"
+        },
+        {
+            "builder": "html_template",
+            "source_directory": "./listings",
+            "output_directory": "."
         }
     ],
     "builders": {
@@ -19,19 +34,27 @@
                 "symlink": true
             }
         },
-        "template": {
+        "markdown_template": {
             "flavor": "MarkdownBuilder",
             "config": {
                 "template_directory": "./templates",
                 "markdown_extensions": ["fenced_code"],
                 "recursive": true
             }
+        },
+        "html_template": {
+            "flavor": "HTMLBuilder",
+            "config": {
+                "recursive": true,
+                "template_directory": "./templates"
+            }
         }
     },
     "variables": {
+        "site_fqdn": "mylesalamb.com",
         "site_name": "mylesalamb.com",
         "author": "Myles Lamb",
-        "project_url": "https://github.com/mylesalamb/yassg",
+        "project_url": "https://github.com/mylesalamb/stencil",
         "socials": [
             {
                 "key": "Twitter",
@@ -44,6 +67,10 @@
             {
                 "key": "Instagram",
                 "link": "https://instagram.com/mylesalamb"
+            },
+            {
+                "key": "Linkedin",
+                "link": "https://linkedin.com/in/mylesalamb"
             }
         ]
     }

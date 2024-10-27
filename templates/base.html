@@ -1,53 +1,5 @@
-<!DOCTYPE html>
+{% extends "root.html" %}
 
-    <head>
-        <!-- Meta spam for SEO -->
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
-        <meta name="title" content="{{ ctx.variables.site_name }}">
-        <meta name="description" content="Personal blog discussing technology topics">
-        <meta name="keywords" content="technology, programming">
-        <meta name="robots" content="index, follow">
-        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-        <meta name="language" content="English">
-        <meta name="revisit-after" content="14 days">
-        <meta name="author" content="{{ ctx.variables.author }}">
-    </head>
-
-    <body>
-        <header>
-            <nav>
-
-            </nav>
-        </header>
-
-        <main>
-            {{ content }}
-        </main>
-
-        <footer class="row">
-            <div>
-                <p>All content is licensed as per the license shown below that content. All other sources (html, css, ...) are released under the terms of the GNU GPL, version 3 or later.</p>
-
-                <p>
-                    This site was generated using <a href="{{ ctx.variables.project_url }}">yassg</a> a static site generator that I wrote myself, given my disdain for all other SSGs in existence.
-                </p>
-                <p>
-                    this has an about page <a href="{{ ctx.get_artifact_by_name('About').url }}">here</a>
-                </p>
-                <p>
-                    © {{ ctx.variables.author }}, 2021-2023.
-                </p>
-            </div>
-            <div>
-                {% for social in ctx.variables.socials %}
-                    <ul>
-                        <li><a href="{{ social.link }}">{{ social.key }}</a></li>
-                    </ul>
-                {% endfor %}
-            </div>
-
-        </footer>
-    </body>
-
-
-</html>
+{% block content %}
+{{ content }}
+{% endblock %}

@@ -5,11 +5,25 @@
 }
 ---
 
-Some about page with some stuff on it
+#### Why this website looks the way it does
 
-```C
-int main(int argc, char* argv[]) {
+[The web obesity crisis](https://idlewords.com/talks/website_obesity.htm) is a well documented trend
+that suggests there is a continual growth of the size of web pages as time passes. There are many
+stipulated reasons as for the cause of this. Whether it be *needless images* or the use
+of heavyweight Javascript or CSS frameworks, thats size overshadows the typically static content it tries to disseminate.
 
+This site uses entirely static HTML content that links to a singular cacheable style sheet
+over HTTP/2. Which lends itself to being fairly responsive without the need of colocating CDNs or
+other delivery mechnisms to reduce latency. Fun fact, this server lives in Nuremberg, DE. Despite
+this, page latency is still relatively low. This is largely due to the fact that this page is only ~6kb
+in stark contrast to some Javascript dependecies, like <a href="https://code.jquery.com/jquery-3.7.1.slim.min.js">JQuery</a> which alone measures in at ~70kb.
 
-}
-```
+#### Privacy
+
+The [{{ ctx.variables.site_fqdn }}](https://{{ ctx.variables.site_fqdn }}) domain is hosted on 
+Hetzner Cloud.
+You can read their privacy policy [here](https://www.hetzner.com/legal/privacy-policy). This website is configured to not
+profile users through cookies or otherwise attempt to track you.
+
+If you have concerns about personal data or want to exercise your rights under the GDPR, contact
+me under the e-mail contained within my <a href="{{ ctx.get_artifact_by_name('Resume.pdf').url }}">resume</a>.

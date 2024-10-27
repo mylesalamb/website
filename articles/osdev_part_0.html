@@ -1,0 +1,267 @@
+---
+{
+    "name": "OSDev Ramblings: Part 0" ,
+    "description": "The bits between _start and \"Hello, World!\"",
+    "type": "article",
+    "template": "article.html",
+    "date": 1716324428
+}
+---
+
+#### Synopsis
+
+This is intended to be a series of writings where I will discuss interesting components of operating
+systems and how they work, With a particular focus on the ARM(AArch64) architecture.
+
+This first commentary presents how to setup a development environment for writing programs for the ARM
+architecture where there is no operating system present. Culminating in writing the classic "Hello, world"
+program, in freestanding C.
+
+A working example of the code here is hosted on my [git repository](https://github.com/mylesalamb/TauOS/tree/2907eaf0ca00eae5209e67669ef5f74154d2f867)
+
+#### Toolchain
+
+Before beginning to write code, we need to setup an appropriate development environment. The version of GCC that you likely have installed on your system, only targets the x86 architecture.
+Hence we need to acquire a cross compiler for the ARM architecture. I use the binary release of the [AArch64 bare-metal target hosted on ARM's website](https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads).
+
+To ease the development process, allowing for fast cycles. It's often useful to use an emulator for testing
+code, the best emulator for ARM devices at the moment is QEMU. On Arch, it can be installed with `pacman -S qemu-system-aarch64`
+
+QEMU emulates a number of common ARM systems, such as Raspberry Pis to Canon cameras. However the simplest target to code
+against is the QEMU 'virt' board. Which this text discusses. In the future I will probably adapt the text to the Raspberry Pi {4,5}. The QEMU 'virt' board, as the name implies
+is not a real ARM system, but presents a customisable substrate for developing against.
+
+One particularly useful feature of QEMU is that it can act as a remote target for GDB, which aids in debugging
+programs, long before we can use functions like `printf()`, that you might see in a typical C program.
+
+#### Boot process on ARM and QEMU
+
+Unlike x86 (or really IBM PC compatibles), the boot process on ARM is not standardized. There is no BIOS that loads
+the contents of a bootsector to a predefined memory address, etc. Typically, there is a board specific firmware that is responsible
+for initialising some core components on the board such as DRAM controllers, The Raspberry Pi line of single board computers (SBCs)
+use the GPU running a firmware blob to load the kernel to a predefined address, whilst Allwinner derived SBCs reset to read a [ROM from a predefined address](https://linux-sunxi.org/Boot_Process)
+that loads a kernel to specific address in memory and jumps to it.<sup>1</sup>
+
+For the QEMU 'virt' board we have a couple of ways of delivering a binary to main memory through what type of file is passed to QEMU when we invoke the command...
+
+* ELF (Executable and Linkable Format): QEMU will attempt to respect the provided  addresses within the ELF file, loading the kernel to a known address.
+* Any other non-ELF type file: QEMU will load the executable to an implementation defined address. In this scenario the kernel is supposed to discover where it is loaded
+and make any neccessary relocations to fixup certain types of operations that depend on the kernel's load address configured in the linker.
+
+
+#### Getting things going...
+
+The first code that runs when the CPU starts, cannot be written in a high level language such as C. As we need to perform some low level operations to configure the environment that C depends on. Hence we define our kernel entrypoint in assembly language in a file called `boot.S`
+
+ARM64 assembly language is relatively straight forward compared to other architectures such as x86-64.
+We have 31 (x0-x30) 64bit general purpose registers to play with, with a relatively simple core set of instructions to get us going. Let's step through the code needed to get a suitable C runtime.
+
+```asm
+/* boot.S a minimal kernel entrypoint */
+.section ".text.boot"
+.global _start
+
+_start:
+    ldr x1, =__kernel_init_stack
+    mov sp, x1
+    bl kinit
+hlt:
+    b hlt
+```
+the directive `.section ".text.boot"` tells the assembler that the code in this file belongs in a particular linker
+section. Specifying an explicit linker section allows us to control where in the binary this code is placed.
+
+the statements `.global _start` and `_start:` defines a 'global' symbol. ie, a name that is visible from outside of this object file when the code is assembled, particularly in the linker. This symbol implements a similar behaviour to the `main()` function.
+in a hosted C program.
+
+Before we can call a C function, we need to both, locate a suitable C function to call and to prepare a stack. The stack is needed so that function call data, local variables etc can be stored at runtime. We do this through the `ldr` instruction<sup>2</sup>.
+
+The ldr instruction can take a literal, or a 'label-expression' referencing some symbol defined elsewhere, and load the value of this symbol or expression to a register. We load the symbol `__kernel_init_stack` which we have not yet defined into the register x1.
+
+After the `ldr` instruction, we prepare our stack pointer by copying the value of x1 to the stack pointer register with the mov instruction. Generally the ldr instruction can't be used with the sp register.
+Lastly we use the `bl` instruction (Branch and Link) to jump to the symbol/function `kinit` which we have not yet defined. 
+
+Notably in this stub, we do cheat a little in that we do not clear the BSS section of the exectuable, or check whether any other cores of the processor are running this stub.
+
+#### Getting to C...
+
+```C
+void kinit()
+{
+    return;
+}
+```
+
+This code is our C entrypoint for the kernel, notably we define the kinit symbol here. It doesn't do anything yet...
+
+#### Putting things together
+
+Lastly, we need some configuration to describe how the exectuable should be arranged in memory. We do this
+through the use of linker scripts.
+
+```ld
+ENTRY(_start)
+SECTIONS
+{
+        . = 0x40080000;
+        __KERNEL_START = .;
+        __TEXT_START = .;
+        .text : ALIGN(4096) {
+                KEEP(*(.text.boot))
+                *(.text)
+        }
+        __TEXT_END = .;
+        __RODATA_START = .;
+        .rodata : ALIGN(4096)
+        {
+                *(.rodata)
+        }
+        __RODATA_END = .;
+ 
+        __DATA_START = .;
+        .data : ALIGN(4096)
+        {
+                *(.data)
+        }
+        __DATA_END = .;
+        __BSS_START = .;
+        .bss : ALIGN(4096)
+        {
+                *(.bss)
+        }
+        /* Preallocate some memory for a stack */
+        /* remembering that stacks grow downwards :) */
+        . = ALIGN(128);
+        . += 4096;
+        __kernel_init_stack = .;
+        __KERNEL_END = .;
+}
+```
+
+[Linker scripts](https://ftp.gnu.org/old-gnu/Manuals/ld-2.9.1/html_chapter/ld_3.html) are a topic in their own right. However, all this really does is arrange the various segments
+of the program into 4kb aligned blocks (relevant later) and set our entrypoint to the _start function that we defined in assembly language. Lastly we set the kernel load address
+to `0x40080000` which is a sensible default for the QEMU virt board.
+
+
+#### Building to an executable
+
+I'm going to omit most of how to actually build the source code to an executable, because it's not particularly
+interesting to me. Building scalable build systems with Makefiles is non trivial, and a pain to debug. If you are interested,
+I have an iterative make framework I put together as part of [this project](https://github.com/mylesalamb/TauOS/tree/2907eaf0ca00eae5209e67669ef5f74154d2f867), that provides relatively nice support for things
+like conditional compilation and linking. I've also built an analogue to the Linux project's Kconfig which integrates with it, which I will show later.
+
+Compiling C code as part of an operating system requires a few flags to be passed to the compiler, namely... `-ffreestanding -nostdlib -nostartfiles -mgeneral-regs-only`. Most of these just tell the compiler
+that the program output should not depend on things that make sense in a hosted environment. `-mgeneral-regs-only` tells the compiler only to use 'general registers'. This limits some optimisations that the compiler might try to use, SIMD etc.
+This requires some more setup in the kernel to use, otherwise the program will unexplainably crash whilst executing certain instructions.<sup>3</sup>
+
+#### Running the code...
+
+Given the kernel has been compiled successfully to an executable called `kernel.elf`, you can run the kernel with `qemu-system-aarch64 -machine virt -m 1024M -kernel kernel.elf -cpu cortex-a53 -display gtk`. Which tells QEMU to start a virtual machine
+with 1Gb of memory, and an ARM Cortex-A53 CPU (the same one used on the Raspberry Pi3), and to display the output in a window backed by gtk.
+
+Nothing exciting should happen.
+
+#### Printing Hello World
+
+The simplest way to get the program to 'do something' is take advantage of one of the peripherals that
+QEMU emulates, the PL011 UART. UART (Universal Asynchronous Receiver-Transmitter) is a device on the emulated
+board that allows for serial data to be exchanged between two devices. In this case, between our host machine
+and the emulated arm system.
+
+So how do we 'speak' to the UART chip? Typically, this is done through a mechanism called Memory Mapped IO, where the CPU can speak to
+peripherals, using the same namespace as main memory. That is, certain blocks of memory addresses that look like RAM actually correspond
+to peripheral devices. On the QEMU 'virt' board one of these UARTs, lives at the address 0x9000000.
+
+The registers for the PL011 UART are documented on ARMs website, Although in reality QEMU emulates a relatively small amount of the functionality.
+hence the only real register of interest is the UARTDR register at offset 0x00.
+
+Lets define a few functions to interact with the UART chip on the QEMU virt board...
+
+#### mmio.h
+
+This function, although with a slightly grotesque signature, realistically does very little.
+
+```C
+#ifndef MMIO_H
+#define MMIO_H 1
+
+static void inline __attribute__((always_inline)) mmio_write8(uintptr_t r, u8 v)
+{
+	*(volatile u8 *)r = v;
+}
+
+#endif
+```
+
+the attribute `__attribute__((always_inline))` insists to the compiler, that this function should ALWAYS
+be inlined. Instead of setting parameters and jumping to this function, wherever this function is called. It is essentially copy-pasted at compile time, even if
+optimisations are disabled. This is desirable as this function is very small (realistically one assembly instruction), where the actual setup, branch and return would dwarf the actual behaviour of the function.
+
+Additionally, we use the volatile keyword when we cast the integer pointer type (`uintptr_t`) to a pointer we can dereference. This is important because when we interact with MMIO we don't want the compiler
+to optimise away writes and reads that have an effect on hardware external to the program.
+
+#### pl011.c
+
+```C
+#include <stdint.h>
+#include <mmio.h>
+
+enum {
+    UARTDR = 0x00,
+};
+
+uintptr_t uart_base = 0;
+
+void pl011_init(uintptr_t address)
+{
+    uart_base = address;
+}
+
+void pl011_putc(const char c)
+{
+    if (c == '\n') {
+        mmio_write8(uart_base + UARTDR, '\r');
+    }
+    
+    mmio_write8(uart_base + UARTDR, c);
+}
+
+void pl011_puts(const char *s)
+{
+
+    if (!s)
+        return;
+
+    while (*s) {
+        pl011_putc(*s++);
+    }
+}
+```
+
+Given this rather simple UART driver, we can initialise it in our kernel main function and print the string "Hello, world" like so
+
+#### kmain.c
+
+```C
+#include <pl011.h>
+
+void kinit()
+{
+    pl011_init(0x9000000);
+    pl011_puts("Hello, world\n");
+    while (1)
+		asm volatile ("nop");
+}
+```
+
+Building the kernel again, and running with the same QEMU command, should result in 'Hello world!' being printed to the screen.
+
+* <sup>1</sup> Some ARM systems, particularly servers support UEFI in a similar manner to x86, with other common subsystems like ACPI
+although its not at all common in consumer hardware.
+* <sup>2</sup> The `ldr` 'instruction' in this form is not really an instruction in itself, but a [pseudo instruction](https://developer.arm.com/documentation/dui0489/i/arm-and-thumb-instructions/ldr-pseudo-instruction).
+Generating a pc-relative load instruction to a closeby literal pool. I'll likely dive into this more in the next part of this series. 
+* <sup>3</sup> Its particularly unfortunate if the compiler tries to optimise `printf` type operations, and in the process introduces bugs into your logger
+#### Up Next...
+
+* Linux kernel boot protocol
+* Making the kernel relocatable

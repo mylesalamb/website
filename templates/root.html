@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+
+    <head>
+        <!-- Meta spam for SEO -->
+        <meta name="viewport" content="width=device-width, initial-scale=1"/>
+        <meta name="title" content="{{ ctx.variables.site_name }}">
+        <meta name="description" content="Personal blog discussing technology topics">
+        <meta name="keywords" content="technology, programming">
+        <meta name="robots" content="index, follow">
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta name="language" content="English">
+        <meta name="revisit-after" content="14 days">
+        <meta name="author" content="{{ ctx.variables.author }}">
+        <link rel="stylesheet" href="{{ ctx.get_artifact_by_name('style.css').url }}" />
+        <meta property="twitter:image" content="https://{{ctx.variables.site_fqdn}}{{ ctx.get_artifact_by_name('ogimage.png').url }}" />
+        <meta property="og:image" content="http://{{ctx.variables.site_fqdn}}{{ ctx.get_artifact_by_name('ogimage.png').url }}" />
+        <meta property="og:image:secure_url" content="https://{{ctx.variables.site_fqdn}}{{ ctx.get_artifact_by_name('ogimage.png').url }}" />
+        <meta property="og:image:type" content="image/x-png" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+
+
+        {% block headers %}
+
+        {% endblock %}
+    </head>
+
+    <body>
+        <header>
+            <nav>
+                <a id="home" href="{{ ctx.get_artifact_by_name('Home').url }}">{{ctx.variables.site_name}}</a>
+                <a href="{{ ctx.get_artifact_by_name('Articles').url }}">Articles</a>
+                <a href="{{ ctx.get_artifact_by_name('Resume.pdf').url }}" target="_blank">Resume</a>
+                
+            </nav>
+            <hr>
+        </header>
+
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+
+        <footer>
+            © {{ ctx.variables.author }} 2024. | <a href="{{ ctx.get_artifact_by_name('About').url }}">About</a> | Built with <a href="https://github.com/mylesalamb/stencil">Stencil</a>
+        </footer>
+    </body>
+
+
+</html>
